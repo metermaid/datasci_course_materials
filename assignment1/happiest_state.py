@@ -21,31 +21,44 @@ def readSentiment(sentFile):
 	return scores
 
 def readTweets(tweetFile):
-	''' returns a list of strings (the text from the tweets) '''
+	''' returns a list of tweet JSONs '''
 	tweets = []
 	tweetData = open(tweetFile)
 	scores = {} # initialize an empty dictionary
 	for line in tweetData:
-		tweetText = json.loads(line)
-		if tweetText.get("text"):
-			tweets.append(tweetText.get("text"))
+		tweetJSON = json.loads(line)
+		tweets.append(tweetJSON)
 	tweetData.close()
 	return tweets
 
-def scoreTweets(tweetList, scores):
-	''' prints out score for each tweet in a list of strings '''
+def happiestState(tweetList, scores):
+	''' prints the happiest State?! '''
+	states = {}
 	for tweet in tweetList:
-		words = re.split('\W+', tweet)
-		score = 0
-		for word in words:
-			score += scores.get(word, 0)
-		print score
+		place = tweet.get("place", {})
+		if place != None and place.get("country_code", "") == "US":
+
+			name = place.get("full_name")
+			state = re.split("\W+", name)[-1]
+
+			text = tweet["text"]
+			words = re.split('\W+', text)
+
+			score = 0
+			for word in words:
+				score += scores.get(word, 0)
+
+			states.setdefault(state, [])
+			states[state].append(score)
+
+	print max(states, key=states.get)
+
 
 def main():
     sentDict = readSentiment(sent_file)
     tweetList = readTweets(tweet_file)
 
-    scoreTweets(tweetList, sentDict)
+    happiestState(tweetList, sentDict)
 
 if __name__ == '__main__':
     main()
